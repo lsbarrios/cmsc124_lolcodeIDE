@@ -38,6 +38,9 @@ KEYWORD_LIST = []
 for size in [4,3,2,1]:
     for category in KEYWORDS:
         for kw in KEYWORDS[category]:
+            #May keyword kasi na A sometimes used as MAEK (variable) A (type)
+            if kw == "A":
+                continue
             if len(kw.split()) == size:
                 KEYWORD_LIST.append(kw)
 
