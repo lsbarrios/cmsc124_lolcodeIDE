@@ -1,5 +1,4 @@
 import re
-import sys
 
 class Token:
     def __init__(self, type, lexeme, line):
@@ -7,28 +6,47 @@ class Token:
         self.lexeme = lexeme
         self.line = line
 
-
-KEYWORDS = [
-    "HAI", "KTHXBYE", "WAZZUP", "BUHBYE",
-    "I HAS A", "ITZ", "R", "AN",
-    "SUM OF", "DIFF OF", "PRODUKT OF", "QUOSHUNT OF", "MOD OF",
-    "BIGGR OF", "SMALLR OF",
-    "BOTH OF", "EITHER OF", "WON OF", "NOT", "ANY OF", "ALL OF",
-    "BOTH SAEM", "DIFFRINT",
-    "SMOOSH", "MAEK", "A", "IS NOW A",
-    "VISIBLE", "GIMMEH",
-    "O RLY?", "YA RLY", "MEBBE", "NO WAI", "OIC",
-    "WTF?", "OMG", "OMGWTF",
-    "IM IN YR", "UPPIN", "NERFIN", "YR", "TIL", "WILE", "IM OUTTA YR",
-    "HOW IZ I", "IF U SAY SO", "GTFO", "FOUND YR", "I IZ", "MKAY",
-]
+KEYWORDS = {
+    "Code Delimiter" : ["HAI", "KTHXBYE"],
+    "Variable Delimiter" : ["WAZZUP", "BUHBYE"],
+    "Variable Declaration" : ["I HAS A"],
+    "Variable Assignment" : ["ITZ", "R"],
+    "Operand Separator" : ["AN"],
+    "Arithmetic Operation" : ["SUM OF", "DIFF OF", "PRODUKT OF", "QUOSHUNT OF","MOD OF", "BIGGR OF", "SMALLR OF"],
+    "Boolean Operation" : ["BOTH OF", "EITHER OF", "WON OF", "NOT","ANY OF", "ALL OF"],
+    "Comparison Operation" : ["BOTH SAEM", "DIFFRINT"],
+    "Concatenation" : ["SMOOSH"],
+    "Typecast" : ["MAEK", "A", "IS NOW A"],
+    "Output Keyword" : ["VISIBLE"],
+    "Input Keyword" : ["GIMMEH"],
+    "If-Else Keyword" : ["YA RLY", "MEBBE", "NO WAI"],
+    "Switch-Case Keyword" : ["WTF?", "OMG", "OMGWTF"],
+    "Conditional Delimiter" : ["O RLY?", "OIC"],
+    "Loop Delimiter" : ["IM IN YR", "IM OUTTA YR"],
+    "Loop Operation" : ["UPPIN", "NERFIN"], 
+    "Loop Condition" : ["TIL", "WILE"],
+    "Argument Marker" : ["YR"],
+    "Function Delimiter" : ["HOW IZ I", "IF U SAY SO"],
+    "Function Call" : ["I IZ"],
+    "Return Keyword" : ["FOUND YR"],
+    "Break Keyword" : ["GTFO"],
+    "List Terminator" : ["MKAY"],
+}
 
 #sort by putting the keywords with the most words first
 KEYWORD_LIST = []
 for size in [4,3,2,1]:
-    for kw in KEYWORDS:
-        if len(kw.split()) == size:
-            KEYWORD_LIST.append(kw)
+    for category in KEYWORDS:
+        for kw in KEYWORDS[category]:
+            if len(kw.split()) == size:
+                KEYWORD_LIST.append(kw)
+
+#return the group a keyword belongs to
+def get_category(kw):
+    for category in KEYWORDS:
+        if kw in KEYWORDS[category]:
+            return category
+    return None
 
 PATTERNS = [
     ("NUMBAR", r"^\-?\d+\.\d+$"),                     
@@ -113,9 +131,9 @@ def tokenize(src, keep_newlines=True):
                 else:
                     tokens.append(Token("YARN", '"' + part + '"' , line_no ))
                     prev_kw = None
+
             #outside of quotes, not YARN or string
             else:
-                part =part.replace("+", " + ")
                 words = part.split()
 
                 i = 0
@@ -136,7 +154,7 @@ def tokenize(src, keep_newlines=True):
                     #keyword with size from 1 to 4, send starting word index
                     kw = match_keyword(words, i)
                     if kw is not None:
-                        tokens.append(Token("KEYWORD", kw, line_no))
+                        tokens.append(Token(get_category(kw), kw, line_no))
                         prev_kw = kw
                         i+=len(kw.split())
                         continue
@@ -183,10 +201,11 @@ HOW IZ I printNum YR x
 IF U SAY SO
 
 HAI
-    WAZZUP
+    WAZZUP##
         I HAS A name
         I HAS A num1
         I HAS A num2
+        I HAS A thing2 ITZ "some"
     BUHBYE
 
     GIMMEH num1
@@ -217,7 +236,7 @@ def main():
 
     print(f"{'LINE':<6}{'TYPE':<13}LEXEME")
     for t in toks:
-        print(f"{t.line:<6}{t.type:<13}{t.lexeme}")
+        print(f"{t.line:<6}{t.type:<25}{t.lexeme}")
 
     if len(errs) > 0:
         print("\nLEXICAL ERRORS:")
